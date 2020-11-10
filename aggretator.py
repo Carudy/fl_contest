@@ -1,3 +1,9 @@
+def direction_grads(a, b):
+    if a*b > 1e-8:
+        return a
+    else:
+        return 0
+
 def aggregate_grads(grads, backend):
     all_grads = {}
     n_total_samples = 0
@@ -8,14 +14,12 @@ def aggregate_grads(grads, backend):
 
     gradients = {}
     for k, v in all_grads.items():
-        drt0 = [i for i in v if i>0]
-        drt1 = [i for i in v if i<0]
-        if len(drt0) > len(drt1):
-            gradients[k] = backend.sum(drt0, dim=0) / len(drt0)
-        elif len(drt0) < len(drt1):
-            gradients[k] = backend.sum(drt1, dim=0) / len(drt1)
-        else:
-            gradients[k] = 0.
+        v = backend.torch.Tensor(v)
+        frac = 1.0 / len(v)
+        d = (((v>1e-8)*1.0) + ((v<-1e-8)*-1.0)).sum(dim=0)
+        for son in v:
+            son.map_(d, direction_grads)
+        gradients[k] = v.sum(dim=0)
 
     return gradients
 

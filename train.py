@@ -25,7 +25,7 @@ def user_round_train(X, Y, model, device, debug=False):
         # ipdb.set_trace()
         # print(data.shape, target.shape)
         output = model(data)
-        loss = F.nll_loss(output, target)
+        loss = F.nll_loss(output, target.long())
         total_loss += loss
         loss.backward()
         pred = output.argmax(

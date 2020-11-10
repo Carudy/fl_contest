@@ -7,7 +7,7 @@ import pandas as pd
 import torch
 import torch.utils.data
 
-TRAINDATA_DIR = './train_all/'
+TRAINDATA_DIR = './train/'
 TESTDATA_PATH = './test/testing-X.pkl'
 ATTACK_TYPES = {
     'snmp': 0,
@@ -42,8 +42,11 @@ class CompDataset(object):
 
 
 def extract_features(data, has_label=True):
-
-    data['SimillarHTTP'] = 5. if re.match(r'(?:[0-9]{1,3}\.){3}[0-9]{1,3}/?.{0,5}\.?.{0,10}\??', data['SimillarHTTP']) else 0.
+    n = len(data['SimillarHTTP'])
+    for i in range(n):
+        data.iloc[i, -3] = 5. if data.iloc[i, -3]!=0 and 'php' in data.iloc[i, -3] else 0.
+    
+    # data['SimillarHTTP'] = 0.
     if has_label:
         return data.iloc[:, -80:-1]
 
