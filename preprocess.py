@@ -103,8 +103,8 @@ class UserRoundData(object):
         if n_round_samples == -1: return self._user_datasets[user_idx]
         
         n = len(self._user_datasets[user_idx][1])
-        # at least 2 data for batchnorm
-        if self.pt_users[user_idx] + 1 >= n:
+        # at least 'n_round_samples' data for batchnorm
+        if self.pt_users[user_idx] + n_round_samples >= n:
             self.pt_users[user_idx] = 0
             state = np.random.get_state()
             np.random.shuffle(self._user_datasets[user_idx][0])
