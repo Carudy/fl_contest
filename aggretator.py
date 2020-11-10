@@ -1,20 +1,25 @@
 def aggregate_grads(grads, backend):
-    """Aggregate model gradients to models.
+    all_grads = {}
+    n_total_samples = 0
+    for gradinfo in grads:
+        for k, v in gradinfo['named_grads'].items():
+            if k not in all_grads: all_grads[k] = []
+            all_grads[k].append(v)
 
-    Args:
-        data: a list of grads' information
-            item format:
-                {
-                    'n_samples': xxx,
-                    'named_grads': xxx,
-                }
-    Return:
-        named grads: {
-            'layer_name1': grads1,
-            'layer_name2': grads2,
-            ...
-        }
-    """
+    gradients = {}
+    for k, v in all_grads.items():
+        drt0 = [i for i in v if i>0]
+        drt1 = [i for i in v if i<0]
+        if len(drt0) > len(drt1):
+            gradients[k] = backend.sum(drt0, dim=0) / len(drt0)
+        elif len(drt0) < len(drt1):
+            gradients[k] = backend.sum(drt1, dim=0) / len(drt1)
+        else:
+            gradients[k] = 0.
+
+    return gradients
+
+def aggregate_grads_ori(grads, backend):
     total_grads = {}
     n_total_samples = 0
     for gradinfo in grads:

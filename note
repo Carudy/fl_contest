@@ -1,3 +1,2 @@
 - SimillarHTTP : ip/c.php?* => malicious
-- duration => atk_type
-- 
+- duration / packet_size => normalization
