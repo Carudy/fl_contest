@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from preprocess import CompDataset
 
 
-def user_round_train(X, Y, model, device, debug=False):
+def user_round_train(X, Y, model, device, debug=True):
     data = CompDataset(X=X, Y=Y)
     train_loader = torch.utils.data.DataLoader(
         data,
@@ -24,6 +24,10 @@ def user_round_train(X, Y, model, device, debug=False):
         # import ipdb
         # ipdb.set_trace()
         # print(data.shape, target.shape)
+
+        # zt modified
+        # data = data.reshape((320,1,79))
+        # target = target.long()
         output = model(data)
         loss = F.nll_loss(output, target)
         total_loss += loss

@@ -8,6 +8,7 @@ import torch
 import torch.utils.data
 
 TRAINDATA_DIR = './train_all/'
+# TRAINDATA_DIR = './train/'
 TESTDATA_PATH = './test/testing-X.pkl'
 ATTACK_TYPES = {
     'snmp': 0,
