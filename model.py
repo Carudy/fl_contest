@@ -75,7 +75,7 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
         self.use_cuda = False
         self.batch_size = 64
         self.test_batch_size = 1000
-        self.lr = 0.001
+        self.lr = 0.003
         self.n_max_rounds = 10000
         self.log_interval = 10
         self.n_round_samples = 1600
