@@ -212,7 +212,7 @@ class FederatedAveragingGrads(Aggregator):
         if not grads:
             return
 
-        if not isinstance(grads, list):
+        if not isinstance(grads[0], list):
             raise ValueError('grads should be a list, not {}'.format(
                 type(grads)))
 

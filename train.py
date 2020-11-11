@@ -19,6 +19,7 @@ def user_round_train(X, Y, model, device, debug=True):
     real = []
     total_loss = 0
     model = model.to(device)
+    n_batch = len(train_loader)
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         # import ipdb
@@ -42,8 +43,9 @@ def user_round_train(X, Y, model, device, debug=True):
     for name, param in model.named_parameters():
         grads['named_grads'][name] = param.grad.detach().cpu().numpy()
 
+    avg_loss = total_loss / n_batch
     if debug:
-        print('Training Loss: {:<10.2f}, accuracy: {:<8.2f}'.format(
-            total_loss, 100. * correct / len(train_loader.dataset)))
+        print('Total Loss: {:<8.2f}, Avg Loss: {:<8.2f}, Acc: {:<8.2f}'.format(
+            total_loss, avg_loss, 100. * correct / len(train_loader.dataset)))
 
-    return grads
+    return [grads, avg_loss]

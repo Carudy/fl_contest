@@ -1,18 +1,22 @@
-# dy: top-k norm only contribute
+# dy: high loss contribute more
 def aggregate_grads(grads, backend):
     all_grads = {}
     n_total_samples = 0
     n_users = len(grads)
-    for gradinfo in grads:
-        n_samples = gradinfo['n_samples']
+    # sort by loss
+    grads.sort(key=lambda x:x[1])
+    N = (1 + n_users) * n_users * 0.5
+    for i, gradinfo in enumerate(grads):
+        n_samples = gradinfo[0]['n_samples']
         n_total_samples += n_samples
-        for k, v in gradinfo['named_grads'].items():
+        for k, v in gradinfo[0]['named_grads'].items():
             if k not in all_grads: all_grads[k] = []
-            all_grads[k].append(v * n_samples)
+            all_grads[k].append(v * n_samples * (i+1.))
 
     gradients = {}
+    n_total_samples *= N
     for k, v in all_grads.items():
-        v = sorted(v, key=lambda x:backend.torch.Tensor(x).norm())[-(n_users>>1):]
+        # v = sorted(v, key=lambda x:backend.torch.Tensor(x).norm())[-int(n_users * 0.5):]
         gradients[k] = backend.sum(v, dim=0) / n_total_samples
 
     return gradients

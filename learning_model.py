@@ -1,7 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 class FLModel(nn.Module):
     def __init__(self):
         super().__init__()
@@ -11,15 +10,7 @@ class FLModel(nn.Module):
             nn.Linear(79, 128),
             nn.BatchNorm1d(128),
             nn.ReLU(True),
-
-            nn.Linear(128, 256),
-            nn.BatchNorm1d(256),
-            nn.ReLU(True),
-            
-            nn.Linear(256, 128),
-            nn.BatchNorm1d(128),
-            nn.ReLU(True),
-            
+          
             nn.Linear(128, 64),
             nn.BatchNorm1d(64),
             nn.ReLU(True),

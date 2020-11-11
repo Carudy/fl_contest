@@ -1,3 +1,10 @@
+################ dy MOD ################
+# save_testdata_prediction : return
+# lr, seed, 
+# self.urd = UserRoundData()
+# self._clear()
+########################################
+
 from datetime import datetime
 import os
 import shutil
@@ -75,10 +82,10 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
         self.use_cuda = False
         self.batch_size = 64
         self.test_batch_size = 1000
-        self.lr = 0.003
-        self.n_max_rounds = 10000
+        self.lr = 0.005
+        self.n_max_rounds = 2401
         self.log_interval = 10
-        self.n_round_samples = 1600
+        self.n_round_samples = 3200
         self.testbase = self.TEST_BASE_DIR
         self.testworkdir = os.path.join(self.testbase, 'competetion-test')
         # dy: clear for local exp
@@ -99,11 +106,13 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
         if not os.path.exists(self.RESULT_DIR):
             os.makedirs(self.RESULT_DIR)
 
-        self.urd = UserRoundData()
+        # self.urd = UserRoundData()
+        self.urd = torch.load('./URD.laz')
         self.n_users = self.urd.n_users
 
     def _clear(self):
-        shutil.rmtree(self.testworkdir)
+        if os.path.exists(self.testworkdir): 
+            shutil.rmtree(self.testworkdir)
 
     def tearDown(self):
         self._clear()
@@ -153,6 +162,8 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
             fout.writelines(os.linesep.join([str(n) for n in predition]))
 
     def save_testdata_prediction(self, model, device):
+        # dy: return when local-exp
+        return
         loader = get_test_loader(batch_size=1000)
         prediction = []
         with torch.no_grad():
@@ -173,7 +184,7 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
                 data, target = data.to(device), target.to(device)
                 output = model(data)
                 test_loss += F.nll_loss(
-                    output, target,
+                    output, target.long(),
                     reduction='sum').item()  # sum up batch loss
                 pred = output.argmax(
                     dim=1,

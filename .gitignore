@@ -1,6 +1,9 @@
 .ipynb_checkpoints/
 __pycache__/
 train/
-train_all/
+train_test/
+result/
 tmp/
 *.ipynb
+URD
+note
