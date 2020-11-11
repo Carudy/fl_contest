@@ -71,7 +71,7 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
     TEST_BASE_DIR = '/tmp/'
 
     def setUp(self):
-        self.seed = 0
+        self.seed = 6969
         self.use_cuda = False
         self.batch_size = 64
         self.test_batch_size = 1000
@@ -81,6 +81,8 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
         self.n_round_samples = 1600
         self.testbase = self.TEST_BASE_DIR
         self.testworkdir = os.path.join(self.testbase, 'competetion-test')
+        # dy: clear for local exp
+        self._clear()
 
         if not os.path.exists(self.testworkdir):
             os.makedirs(self.testworkdir)

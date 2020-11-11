@@ -1,25 +1,19 @@
-def direction_grads(a, b):
-    if a*b > 1e-8:
-        return a
-    else:
-        return 0
-
+# dy: top-k norm only contribute
 def aggregate_grads(grads, backend):
     all_grads = {}
     n_total_samples = 0
+    n_users = len(grads)
     for gradinfo in grads:
+        n_samples = gradinfo['n_samples']
+        n_total_samples += n_samples
         for k, v in gradinfo['named_grads'].items():
             if k not in all_grads: all_grads[k] = []
-            all_grads[k].append(v)
+            all_grads[k].append(v * n_samples)
 
     gradients = {}
     for k, v in all_grads.items():
-        v = backend.torch.Tensor(v)
-        frac = 1.0 / len(v)
-        d = (((v>1e-8)*1.0) + ((v<-1e-8)*-1.0)).sum(dim=0)
-        for son in v:
-            son.map_(d, direction_grads)
-        gradients[k] = v.sum(dim=0)
+        v = sorted(v, key=lambda x:backend.torch.Tensor(x).norm())[-(n_users>>1):]
+        gradients[k] = backend.sum(v, dim=0) / n_total_samples
 
     return gradients
 

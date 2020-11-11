@@ -7,7 +7,7 @@ import pandas as pd
 import torch
 import torch.utils.data
 
-TRAINDATA_DIR = './train/'
+TRAINDATA_DIR = './train_test/'
 TESTDATA_PATH = './test/testing-X.pkl'
 ATTACK_TYPES = {
     'snmp': 0,
@@ -42,11 +42,7 @@ class CompDataset(object):
 
 
 def extract_features(data, has_label=True):
-    n = len(data['SimillarHTTP'])
-    for i in range(n):
-        data.iloc[i, -3] = 5. if data.iloc[i, -3]!=0 and 'php' in data.iloc[i, -3] else 0.
-    
-    # data['SimillarHTTP'] = 0.
+    data['SimillarHTTP'] = 0.
     if has_label:
         return data.iloc[:, -80:-1]
 
@@ -60,7 +56,26 @@ class UserRoundData(object):
         self.attack_types = ATTACK_TYPES
         self._load_data()
 
-    def _get_data(self, fpath):
+    def cal(self, x):
+        if not x: return 0
+        try:
+            return float(x)
+        except:
+            return 13. if re.match(r'(?:[0-9]{1,3}\.){3}[0-9]{1,3}/?.{0,5}\.?.{0,10}\??', x) else 0.
+    
+    # dy: make 'similarhttp' useful
+    def _get_data(self, fname):
+        print('Reading: ' + fname)
+        cont = open(fname).readlines()[1:]
+        cont = [d[:-1].split(',')[-80:] for d in cont]
+        x = [list(map(self.cal, i[:-1])) for i in cont]
+        x = np.array(x).astype(np.float32)
+        x[x == np.inf] = 1.
+        x[np.isnan(x)] = 0.
+        y = [self.attack_types[i[-1].split('_')[-1].replace('-', '').lower()] for i in cont]
+        return (x, y)
+
+    def _get_data_ori(self, fpath):
         if not fpath.endswith('csv'):
             return
 
@@ -84,9 +99,7 @@ class UserRoundData(object):
         _user_datasets = []
         self._user_datasets = []
         for root, dirs, fnames in os.walk(self.data_dir):
-            for fname in fnames:
-                # each file is for each user
-                # user data can not be shared among users
+            for fname in [f for f in fnames if f.endswith('csv')]:
                 data = self._get_data(os.path.join(root, fname))
                 if data is not None:
                     _user_datasets.append(data)
