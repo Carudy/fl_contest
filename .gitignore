@@ -5,5 +5,5 @@ train_test/
 result/
 tmp/
 *.ipynb
-URD
+lazy/
 note

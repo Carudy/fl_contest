@@ -4,8 +4,6 @@ import torch.nn.functional as F
 class FLModel(nn.Module):
     def __init__(self):
         super().__init__()
-        # self.fc1 = nn.Linear(79, 256)
-        # self.fc5 = nn.Linear(256, 14)
         self.layer = nn.Sequential(
             nn.Linear(79, 128),
             nn.BatchNorm1d(128),
@@ -27,15 +25,8 @@ class FLModel(nn.Module):
             )
 
     def forward(self, x):
-        # x = self.fc1(x)
-        # x = F.relu(x)
-        # x = self.fc5(x)
-        # print(x.shape)
-
         x = self.layer(x)
         output = F.log_softmax(x, dim=1)
-        # print(output.shape)
-
         return output
 
 class ZTModel_1D(nn.Module):

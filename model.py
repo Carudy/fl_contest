@@ -82,8 +82,8 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
         self.use_cuda = False
         self.batch_size = 64
         self.test_batch_size = 1000
-        self.lr = 0.005
-        self.n_max_rounds = 2401
+        self.lr = 0.003
+        self.n_max_rounds = 241
         self.log_interval = 10
         self.n_round_samples = 3200
         self.testbase = self.TEST_BASE_DIR
@@ -107,10 +107,11 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
             os.makedirs(self.RESULT_DIR)
 
         # self.urd = UserRoundData()
-        self.urd = torch.load('./URD.laz')
+        self.urd = torch.load('lazy/URD')
         self.n_users = self.urd.n_users
 
     def _clear(self):
+        # dy: add check
         if os.path.exists(self.testworkdir): 
             shutil.rmtree(self.testworkdir)
 

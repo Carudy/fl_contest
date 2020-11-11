@@ -72,7 +72,7 @@ class UserRoundData(object):
         x = np.array(x).astype(np.float32)
         x[x == np.inf] = 1.
         x[np.isnan(x)] = 0.
-        y = [self.attack_types[i[-1].split('_')[-1].replace('-', '').lower()] for i in cont]
+        y = np.array([self.attack_types[i[-1].split('_')[-1].replace('-', '').lower()] for i in cont])
         return (x, y)
 
     def _get_data_ori(self, fpath):
