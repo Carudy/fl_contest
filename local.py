@@ -10,10 +10,10 @@ from context import PytorchModel
 from learning_model import FLModel
 from preprocess import CompDataset
 
-_EPOCH      =   100
-_BATCH_SIZE =   320
-_BATCH_TEST =   1200
-_LR         =   0.01
+_EPOCH      =   1000
+_BATCH_SIZE =   64
+_BATCH_TEST =   1600
+_LR         =   0.001
 
 def predict(model, data):
     model.eval()
@@ -21,6 +21,7 @@ def predict(model, data):
     loss = 0
     data_loader = torch.utils.data.DataLoader(data, batch_size=_BATCH_TEST)
     for _, (data, target) in enumerate(data_loader):
+        data, target = data.to(device), target.to(device)
         output  =  model(data)
         loss    += F.nll_loss(output, target.long(), reduction='sum').item()
         y_pred  =  output.data.max(1, keepdim=True)[1]
@@ -32,7 +33,8 @@ def predict(model, data):
     return acc, loss
 
 if __name__ == '__main__':
-    model = FLModel()
+    device = torch.device('cuda:0')
+    model = FLModel().to(device)
     data = torch.load('lazy/URD_IID')
     print('Data read.')
     dataset = CompDataset(X=data[0], Y=data[1])
@@ -44,11 +46,12 @@ if __name__ == '__main__':
     n_batch = len(train_loader)
     optim   =  torch.optim.Adam(model.parameters(), lr = _LR)
 
-    print('Start Learning:')
+    print('Start Learning: batch_num-{}'.format(n_batch))
     model.train()
     for r in range(1, _EPOCH + 1):
         total_loss = 0
         for batch_idx, (data, target) in enumerate(train_loader):
+            data, target = data.to(device), target.to(device)
             output = model(data)
             loss = F.nll_loss(output, target.long())
             total_loss += loss
@@ -58,6 +61,6 @@ if __name__ == '__main__':
             pred = output.argmax(dim=1, keepdim=True)
 
         print('Round : {};  Avg loss: {:.4f}'.format(r, total_loss / n_batch))
-        if r<10:
+        if r%5==0:
             acc, loss = predict(model, dataset)
             print('\tACC: {:.3f};  Avg loss: {:.4f}'.format(acc, loss))

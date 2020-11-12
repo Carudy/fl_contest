@@ -70,13 +70,20 @@ class PytorchModel(ModelBase):
                                  self.optim_name)(self.model.parameters(),
                                                   lr=self.lr)
 
+    def set_lr(self, lr):
+        print('change lr: {}'.format(lr))
+        for param_group in self.optimizer.param_groups:
+            param_group['lr'] = lr
+
     def update_grads(self, grads):
         self.optimizer.zero_grad()
 
         for k, v in self.model.named_parameters():
-            v.grad = grads[k].type(v.dtype)
+            v.grad = grads[0][k].type(v.dtype)
 
         self.optimizer.step()
+
+        if grads[1] == 10: self.set_lr(0.0001)
 
     def update_params(self, params):
 

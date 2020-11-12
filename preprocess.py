@@ -63,6 +63,18 @@ class UserRoundData(object):
         except:
             return 13. if re.match(r'(?:[0-9]{1,3}\.){3}[0-9]{1,3}/?.{0,5}\.?.{0,10}\??', x) else 0.
     
+    def normalize_1000(self, data):
+        mi = data.min(0, keepdim=True)[0]
+        ma = data.max(0, keepdim=True)[0]
+        data -= mi
+        data /= ma + 1e-9
+        data *= 1000.
+
+    def normalize_dy(self):
+        for u in self._user_datasets:
+            u = [torch.Tensor(u[0]), u[1]]
+            self.normalize_1000(u[0])
+
     # dy: make 'similarhttp' useful
     def _get_data(self, fname):
         print('Reading: ' + fname)

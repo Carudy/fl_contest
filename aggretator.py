@@ -2,31 +2,37 @@
 def aggregate_grads(grads, backend):
     all_grads = {}
     n_total_samples = 0
+    tot_loss = sum(gradinfo[1].item() for gradinfo in grads)
     n_users = len(grads)
+
     # sort by loss
-    grads.sort(key=lambda x:x[1])
-    N = (1 + n_users) * n_users * 0.5
-    for i, gradinfo in enumerate(grads):
+    # print(tot_loss)
+    # grads.sort(key=lambda x:-x[1])
+    # for i in range(n_users):
+    #     for k, v in grads[i][0]['named_grads'].items(): 
+    #         v *= 2. if i < n_users*0.3 else (0.1 if i > n_users*0.8 else 1.)
+
+    for _, gradinfo in enumerate(grads):
         n_samples = gradinfo[0]['n_samples']
         n_total_samples += n_samples
+        n_samples *=gradinfo[1].item()
         for k, v in gradinfo[0]['named_grads'].items():
             if k not in all_grads: all_grads[k] = []
-            all_grads[k].append(v * n_samples * (i+1.))
+            all_grads[k].append(v * n_samples)
 
     gradients = {}
-    n_total_samples *= N
+    N = n_total_samples * tot_loss
     for k, v in all_grads.items():
-        # v = sorted(v, key=lambda x:backend.torch.Tensor(x).norm())[-int(n_users * 0.5):]
-        gradients[k] = backend.sum(v, dim=0) / n_total_samples
+        gradients[k] = backend.sum(v, dim=0) / N
 
-    return gradients
+    return [gradients, grads[0][2]]
 
 def aggregate_grads_ori(grads, backend):
     total_grads = {}
     n_total_samples = 0
     for gradinfo in grads:
-        n_samples = gradinfo['n_samples']
-        for k, v in gradinfo['named_grads'].items():
+        n_samples = gradinfo[0]['n_samples']
+        for k, v in gradinfo[0]['named_grads'].items():
             if k not in total_grads:
                 total_grads[k] = []
 
@@ -37,4 +43,4 @@ def aggregate_grads_ori(grads, backend):
     for k, v in total_grads.items():
         gradients[k] = backend.sum(v, dim=0) / n_total_samples
 
-    return gradients
+    return [gradients, 0]

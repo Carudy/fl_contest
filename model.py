@@ -1,6 +1,6 @@
 ################ dy MOD ################
 # save_testdata_prediction : return
-# lr, seed, 
+# lr, seed, bs 
 # self.urd = UserRoundData()
 # self._clear()
 ########################################
@@ -24,7 +24,7 @@ from train import user_round_train
 
 
 class ParameterServer(object):
-    def __init__(self, init_model_path, testworkdir):
+    def __init__(self, init_model_path, testworkdir, lr):
         self.round = 0
         self.rounds_info = {}
         self.rounds_model_path = {}
@@ -34,7 +34,8 @@ class ParameterServer(object):
             model=PytorchModel(torch=torch,
                                model_class=FLModel,
                                init_model_path=self.init_model_path,
-                               optim_name='Adam'),
+                               optim_name='Adam',
+                               lr=lr),
             framework='pytorch',
         )
 
@@ -82,14 +83,17 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
         self.use_cuda = False
         self.batch_size = 64
         self.test_batch_size = 1000
-        self.lr = 0.003
-        self.n_max_rounds = 241
+        self.lr = 0.001
+        self.n_max_rounds = 480
         self.log_interval = 10
-        self.n_round_samples = 3200
+        self.n_round_samples = 1600
         self.testbase = self.TEST_BASE_DIR
         self.testworkdir = os.path.join(self.testbase, 'competetion-test')
         # dy: clear for local exp
+        # max_acc: save the best model
         self._clear()
+        self.max_acc = 0
+        self.best_model = {}
 
         if not os.path.exists(self.testworkdir):
             os.makedirs(self.testworkdir)
@@ -101,7 +105,8 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
             torch.save(FLModel().state_dict(), self.init_model_path)
 
         self.ps = ParameterServer(init_model_path=self.init_model_path,
-                                  testworkdir=self.testworkdir)
+                                  testworkdir=self.testworkdir,
+                                  lr=self.lr)
 
         if not os.path.exists(self.RESULT_DIR):
             os.makedirs(self.RESULT_DIR)
@@ -135,8 +140,8 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
                     user_idx=u,
                     n_round=r,
                     n_round_samples=self.n_round_samples)
-                grads = user_round_train(X=x, Y=y, model=model, device=device)
-                self.ps.receive_grads_info(grads=grads)
+                grads = user_round_train(X=x, Y=y, model=model, device=device, bs=self.batch_size, debug=True)
+                self.ps.receive_grads_info(grads=grads + [r])
 
             self.ps.aggregate()
             print('\nRound {} cost: {}, total training cost: {}'.format(
@@ -145,13 +150,15 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
                 datetime.now() - training_start,
             ))
 
-            if model is not None and r % 200 == 0:
+            if model is not None and r % 10 == 0:
                 self.predict(model,
                              device,
                              self.urd.uniform_random_loader(self.N_VALIDATION),
                              prefix="Train")
                 self.save_testdata_prediction(model=model, device=device)
 
+        # END
+        model.load_state_dict(self.best_model)
         if model is not None:
             self.save_testdata_prediction(model=model, device=device)
 
@@ -197,9 +204,12 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
         test_loss /= len(test_loader.dataset)
         acc = 100. * correct / len(test_loader.dataset)
         print(classification_report(real, prediction))
-        print(
-            '{} set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(
-                prefix, test_loss, correct, len(test_loader.dataset), acc), )
+        print('{} set: Avg loss: {:.4f}, Acc: {}/{} ({:.0f}%) ever: {:.2f}'.format(
+                prefix, test_loss, correct, len(test_loader.dataset), acc, self.max_acc))
+        # dy: save best model
+        if acc > self.max_acc:
+            self.max_acc    =  acc
+            self.best_model =  model.state_dict().copy()
 
 
 def suite():
