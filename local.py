@@ -10,9 +10,9 @@ from context import PytorchModel
 from learning_model import FLModel
 from preprocess import CompDataset
 
-_EPOCH      =   1000
+_EPOCH      =   200
 _BATCH_SIZE =   64
-_BATCH_TEST =   1600
+_BATCH_TEST =   10000
 _LR         =   0.001
 
 def predict(model, data):
@@ -61,6 +61,6 @@ if __name__ == '__main__':
             pred = output.argmax(dim=1, keepdim=True)
 
         print('Round : {};  Avg loss: {:.4f}'.format(r, total_loss / n_batch))
-        if r%5==0:
+        if r % 10 == 0:
             acc, loss = predict(model, dataset)
             print('\tACC: {:.3f};  Avg loss: {:.4f}'.format(acc, loss))

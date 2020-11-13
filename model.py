@@ -3,6 +3,8 @@
 # lr, seed, bs 
 # self.urd = UserRoundData()
 # self._clear()
+# bet_model / past_acc
+# No date_time
 ########################################
 
 from datetime import datetime
@@ -79,21 +81,29 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
     TEST_BASE_DIR = '/tmp/'
 
     def setUp(self):
-        self.seed = 6969
+        self.seed = 996
         self.use_cuda = False
-        self.batch_size = 64
+        self.batch_size = 32
         self.test_batch_size = 1000
-        self.lr = 0.001
-        self.n_max_rounds = 480
+        self.lr = 0.01
+        self.n_max_rounds = 320
         self.log_interval = 10
-        self.n_round_samples = 1600
+        self.n_round_samples = 3200
         self.testbase = self.TEST_BASE_DIR
         self.testworkdir = os.path.join(self.testbase, 'competetion-test')
+        #####################################
+        # DY-DIY PARAMETERS
+        self.local_exp = True
+        # to predict
+        self.T = 10
         # dy: clear for local exp
         # max_acc: save the best model
-        self._clear()
+        self.use_best = False
         self.max_acc = 0
         self.best_model = {}
+        self.last_acc = []
+        if self.local_exp: self._clear()
+        #####################################
 
         if not os.path.exists(self.testworkdir):
             os.makedirs(self.testworkdir)
@@ -111,8 +121,12 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
         if not os.path.exists(self.RESULT_DIR):
             os.makedirs(self.RESULT_DIR)
 
-        # self.urd = UserRoundData()
-        self.urd = torch.load('lazy/URD')
+        if self.local_exp:
+            self.urd = torch.load('lazy/URD')
+        else:
+            self.urd = UserRoundData()
+        
+        print('Data read.')
         self.n_users = self.urd.n_users
 
     def _clear(self):
@@ -127,11 +141,12 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
         torch.manual_seed(self.seed)
         device = torch.device("cuda" if self.use_cuda else "cpu")
 
-        training_start = datetime.now()
+        # training_start = datetime.now()
         model = None
         for r in range(1, self.n_max_rounds + 1):
             path = self.ps.get_latest_model()
-            start = datetime.now()
+            # start = datetime.now()
+            dy_tot_loss = []
             for u in range(0, self.n_users):
                 model = FLModel()
                 model.load_state_dict(torch.load(path))
@@ -140,17 +155,20 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
                     user_idx=u,
                     n_round=r,
                     n_round_samples=self.n_round_samples)
-                grads = user_round_train(X=x, Y=y, model=model, device=device, bs=self.batch_size, debug=True)
+                grads = user_round_train(X=x, Y=y, model=model, device=device, bs=self.batch_size, debug=False)
+                dy_tot_loss.append(grads[1])
                 self.ps.receive_grads_info(grads=grads + [r])
 
             self.ps.aggregate()
-            print('\nRound {} cost: {}, total training cost: {}'.format(
+            print('\nRound {}, Avg-Min-Max loss: {:.4f}, {:.4f}, {:.4f}'.format(
                 r,
-                datetime.now() - start,
-                datetime.now() - training_start,
+                # datetime.now() - start,
+                sum(dy_tot_loss) / len(dy_tot_loss),
+                min(dy_tot_loss),
+                max(dy_tot_loss),
             ))
 
-            if model is not None and r % 10 == 0:
+            if model is not None and r % self.T == 0:
                 self.predict(model,
                              device,
                              self.urd.uniform_random_loader(self.N_VALIDATION),
@@ -158,7 +176,7 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
                 self.save_testdata_prediction(model=model, device=device)
 
         # END
-        model.load_state_dict(self.best_model)
+        if self.use_best: model.load_state_dict(self.best_model)
         if model is not None:
             self.save_testdata_prediction(model=model, device=device)
 
@@ -171,7 +189,7 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
 
     def save_testdata_prediction(self, model, device):
         # dy: return when local-exp
-        return
+        if self.local_exp: return
         loader = get_test_loader(batch_size=1000)
         prediction = []
         with torch.no_grad():
@@ -206,10 +224,15 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
         print(classification_report(real, prediction))
         print('{} set: Avg loss: {:.4f}, Acc: {}/{} ({:.0f}%) ever: {:.2f}'.format(
                 prefix, test_loss, correct, len(test_loader.dataset), acc, self.max_acc))
+        # dy: save current acc
+        self.last_acc.append(acc)
+        print('Past: ', end='')
+        for _acc in self.last_acc: print('{:.3f}'.format(_acc), end=', ')
+        print('\n')
         # dy: save best model
         if acc > self.max_acc:
             self.max_acc    =  acc
-            self.best_model =  model.state_dict().copy()
+            if self.use_best: self.best_model =  model.state_dict().copy()
 
 
 def suite():

@@ -125,7 +125,6 @@ class UserRoundData(object):
         self.n_users = len(_user_datasets)
         self.pt_users = {}
         for u in range(self.n_users): self.pt_users[u] = 0
-        print('OK')
             
     # dy: cut data into pieces and shuffle when restart
     def round_data(self, user_idx, n_round, n_round_samples=-1):
