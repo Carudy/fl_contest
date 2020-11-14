@@ -14,6 +14,7 @@ _EPOCH      =   200
 _BATCH_SIZE =   64
 _BATCH_TEST =   10000
 _LR         =   0.001
+NUM_DATA    =   150000
 
 def predict(model, data):
     model.eval()
@@ -36,13 +37,15 @@ if __name__ == '__main__':
     device = torch.device('cuda:0')
     model = FLModel().to(device)
     data = torch.load('lazy/URD_IID')
-    print('Data read.')
-    dataset = CompDataset(X=data[0], Y=data[1])
+    choices = np.random.choice(len(data[0]), NUM_DATA)
+    # print(len(choices), choices[:10])
+    dataset = CompDataset(X=data[0][choices], Y=data[1][choices])
     train_loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=_BATCH_SIZE,
         shuffle=True,
     )
+    print('Data read.')
     n_batch = len(train_loader)
     optim   =  torch.optim.Adam(model.parameters(), lr = _LR)
 

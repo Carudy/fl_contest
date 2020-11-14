@@ -84,7 +84,7 @@ class PytorchModel(ModelBase):
         self.optimizer.step()
 
         # dynamic lr
-        if grads[1] == 180: self.set_lr(0.001)
+        if grads[1] == 120: self.set_lr(0.001)
 
     def update_params(self, params):
 

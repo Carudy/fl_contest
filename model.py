@@ -83,12 +83,12 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
     def setUp(self):
         self.seed = 996
         self.use_cuda = False
-        self.batch_size = 32
+        self.batch_size = 64
         self.test_batch_size = 1000
         self.lr = 0.01
-        self.n_max_rounds = 320
+        self.n_max_rounds = 240
         self.log_interval = 10
-        self.n_round_samples = 3200
+        self.n_round_samples = 1600
         self.testbase = self.TEST_BASE_DIR
         self.testworkdir = os.path.join(self.testbase, 'competetion-test')
         #####################################
@@ -98,7 +98,7 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
         self.T = 10
         # dy: clear for local exp
         # max_acc: save the best model
-        self.use_best = False
+        self.use_best = True
         self.max_acc = 0
         self.best_model = {}
         self.last_acc = []
@@ -155,7 +155,8 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
                     user_idx=u,
                     n_round=r,
                     n_round_samples=self.n_round_samples)
-                grads = user_round_train(X=x, Y=y, model=model, device=device, bs=self.batch_size, debug=False)
+                grads = user_round_train(X=x, Y=y, model=model, device=device, 
+                                         bs=self.batch_size, debug=False, local_epoch=8)
                 dy_tot_loss.append(grads[1])
                 self.ps.receive_grads_info(grads=grads + [r])
 
@@ -176,7 +177,9 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
                 self.save_testdata_prediction(model=model, device=device)
 
         # END
-        if self.use_best: model.load_state_dict(self.best_model)
+        if self.use_best and self.max_acc > 45:
+            print('Best model chosen.')
+            model.load_state_dict(self.best_model)
         if model is not None:
             self.save_testdata_prediction(model=model, device=device)
 
@@ -231,7 +234,7 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
         print('\n')
         # dy: save best model
         if acc > self.max_acc:
-            self.max_acc    =  acc
+            self.max_acc = acc
             if self.use_best: self.best_model =  model.state_dict().copy()
 
 

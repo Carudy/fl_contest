@@ -127,23 +127,23 @@ class UserRoundData(object):
         for u in range(self.n_users): self.pt_users[u] = 0
             
     # dy: cut data into pieces and shuffle when restart
-    def round_data(self, user_idx, n_round, n_round_samples=-1):
+    def round_data_dy(self, user_idx, n_round, n_round_samples=-1):
         if n_round_samples == -1: return self._user_datasets[user_idx]
         
         n = len(self._user_datasets[user_idx][1])
         # at least 'n_round_samples' data for batchnorm
         if self.pt_users[user_idx] + n_round_samples >= n:
             self.pt_users[user_idx] = 0
-            state = np.random.get_state()
-            np.random.shuffle(self._user_datasets[user_idx][0])
-            np.random.set_state(state)
-            np.random.shuffle(self._user_datasets[user_idx][1])
+            # state = np.random.get_state()
+            # np.random.shuffle(self._user_datasets[user_idx][0])
+            # np.random.set_state(state)
+            # np.random.shuffle(self._user_datasets[user_idx][1])
         i = self.pt_users[user_idx]
         j = i + n_round_samples
         self.pt_users[user_idx] = j
         return self._user_datasets[user_idx][0][i:j], self._user_datasets[user_idx][1][i:j]
 
-    def round_data_ori(self, user_idx, n_round, n_round_samples=-1):
+    def round_data(self, user_idx, n_round, n_round_samples=-1):
         """Generate data for user of user_idx at round n_round.
 
         Args:
