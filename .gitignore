@@ -7,3 +7,5 @@ tmp/
 *.ipynb
 lazy/
 note
+th/
+*.zip

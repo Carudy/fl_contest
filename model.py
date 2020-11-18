@@ -85,7 +85,7 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
         self.use_cuda = False
         self.batch_size = 64
         self.test_batch_size = 1000
-        self.lr = 0.01
+        self.lr = 0.1
         self.n_max_rounds = 240
         self.log_interval = 10
         self.n_round_samples = 1600
@@ -156,7 +156,7 @@ class FedAveragingGradsTestSuit(unittest.TestCase):
                     n_round=r,
                     n_round_samples=self.n_round_samples)
                 grads = user_round_train(X=x, Y=y, model=model, device=device, 
-                                         bs=self.batch_size, debug=False, local_epoch=8)
+                                         bs=self.batch_size, debug=(not self.local_exp), local_epoch=8)
                 dy_tot_loss.append(grads[1])
                 self.ps.receive_grads_info(grads=grads + [r])
 

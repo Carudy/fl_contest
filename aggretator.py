@@ -7,20 +7,26 @@ def aggregate_grads(grads, backend):
     # n_smaples
     tot_sample = sum(gradinfo[0]['n_samples'] for gradinfo in grads)
     # avg_loss
-    losses  = sorted([gradinfo[1].item() for gradinfo in grads])
-    m = np.mean(losses)
-    v = np.std(losses)
-    losses  = [abs((i-m)/v) for i in losses]
-    tot_loss = sum(losses) * v
+    losses   = sorted([gradinfo[1].item() for gradinfo in grads])
+    tot_loss = sum(losses)
+    m        = np.mean(losses)
+    tot_norm_loss = sum(abs(i-m) for i in losses)
+    # random lucky
+    n_lucky = int(n_users * 0.1)
+    lucky_c = 2
+    lucky = np.random.choice(n_users, n_lucky)
+    tot_lucky = n_users + n_lucky * lucky_c
 
     # AGG
-    for _, gradinfo in enumerate(grads):
-        feed = gradinfo[0]['n_samples'] / tot_sample
-        feed += abs(gradinfo[1].item()-m) / tot_loss
-        feed *= 0.5
+    for i, gradinfo in enumerate(grads):
+        weight =  gradinfo[0]['n_samples'] / tot_sample
+        weight += gradinfo[1].item() / tot_loss
+        weight += abs(gradinfo[1].item()-m) / tot_norm_loss
+        weight += (lucky_c if i in lucky else 1) / tot_lucky
+        weight /= 4.
         for k, v in gradinfo[0]['named_grads'].items():
             if k not in all_grads: all_grads[k] = []
-            all_grads[k].append(v * feed)
+            all_grads[k].append(v * weight)
 
     ret = {}
     for k, v in all_grads.items():

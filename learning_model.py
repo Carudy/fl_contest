@@ -12,10 +12,10 @@ class FLModel(nn.Module):
             nn.ReLU(),
         )
 
-        self.rnn64 = nn.RNN(input_size=64, hidden_size=32, nonlinearity='relu')
-        self.rnn32 = nn.RNN(input_size=32, hidden_size=16, nonlinearity='relu')
-        self.bnn32 = nn.RNN(input_size=16, hidden_size=32, nonlinearity='relu')
-        self.bnn64 = nn.RNN(input_size=32, hidden_size=64, nonlinearity='tanh')
+        self.rnn64 = nn.LSTM(input_size=64, hidden_size=32)
+        self.rnn32 = nn.LSTM(input_size=32, hidden_size=16)
+        self.bnn32 = nn.LSTM(input_size=16, hidden_size=32)
+        self.bnn64 = nn.LSTM(input_size=32, hidden_size=64)
         
         self.output = nn.Sequential(
             nn.Linear(64, 14)
